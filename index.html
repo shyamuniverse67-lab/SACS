@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Supabase Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      text-align: center;
+      padding: 50px;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      max-width: 400px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: #eee;
+      margin: 5px;
+      padding: 8px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card">
+    <h2>Supabase Simple App</h2>
+
+    <input type="text" id="name" placeholder="Enter your name">
+    <button onclick="saveData()">Save</button>
+
+    <h3>Saved Users:</h3>
+    <ul id="userList"></ul>
+  </div>
+
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // 🔥 PASTE YOUR DETAILS HERE
+    const supabaseUrl = "https://ljbfqakalzbvdkzxccxh.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqYmZxYWthbHpidmRrenhjY3hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzODcxMzUsImV4cCI6MjA4Njk2MzEzNX0.Zcccf4kyadBoIZuj0tM25_KhXG_YZbn_URFBth0vehU";
+
+    const client = supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function saveData() {
+      const nameValue = document.getElementById("name").value;
+
+      if (!nameValue) {
+        alert("Please enter a name");
+        return;
+      }
+
+      const { error } = await client
+        .from("users")
+        .insert([{ name: nameValue }]);
+
+      if (error) {
+        alert("Error saving data");
+        console.log(error);
+      } else {
+        alert("Data Saved!");
+        document.getElementById("name").value = "";
+        loadData();
+      }
+    }
+
+    async function loadData() {
+      const { data, error } = await client
+        .from("users")
+        .select("*")
+        .order("id", { ascending: false });
+
+      if (error) {
+        console.log(error);
+        return;
+      }
+
+      const list = document.getElementById("userList");
+      list.innerHTML = "";
+
+      data.forEach(user => {
+        const li = document.createElement("li");
+        li.textContent = user.name;
+        list.appendChild(li);
+      });
+    }
+
+    // Load data when page opens
+    loadData();
+  </script>
+
+</body>
+</html>
