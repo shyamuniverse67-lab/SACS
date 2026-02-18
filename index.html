@@ -74,54 +74,82 @@
     const supabaseUrl = "https://ljbfqakalzbvdkzxccxh.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqYmZxYWthbHpidmRrenhjY3hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzODcxMzUsImV4cCI6MjA4Njk2MzEzNX0.Zcccf4kyadBoIZuj0tM25_KhXG_YZbn_URFBth0vehU";
 
-    const client = supabase.createClient(supabaseUrl, supabaseKey);
+   const client = supabase.createClient(supabaseUrl, supabaseKey);
 
-    async function saveData() {
-      const nameValue = document.getElementById("name").value;
+let editingId = null;
 
-      if (!nameValue) {
-        alert("Please enter a name");
-        return;
-      }
+async function saveData() {
+  const nameValue = document.getElementById("name").value;
 
-      const { error } = await client
-        .from("users")
-        .insert([{ name: nameValue }]);
+  if (!nameValue) {
+    alert("Please enter a name");
+    return;
+  }
 
-      if (error) {
-        alert("Error saving data");
-        console.log(error);
-      } else {
-        alert("Data Saved!");
-        document.getElementById("name").value = "";
-        loadData();
-      }
+  if (editingId) {
+    // UPDATE
+    const { error } = await client
+      .from("users")
+      .update({ name: nameValue })
+      .eq("id", editingId);
+
+    if (!error) {
+      editingId = null;
+      document.querySelector("button").textContent = "Save";
     }
+  } else {
+    // INSERT
+    const { error } = await client
+      .from("users")
+      .insert([{ name: nameValue }]);
 
-    async function loadData() {
-      const { data, error } = await client
-        .from("users")
-        .select("*")
-        .order("id", { ascending: false });
-
-      if (error) {
-        console.log(error);
-        return;
-      }
-
-      const list = document.getElementById("userList");
-      list.innerHTML = "";
-
-      data.forEach(user => {
-        const li = document.createElement("li");
-        li.textContent = user.name;
-        list.appendChild(li);
-      });
+    if (error) {
+      alert("Error saving data");
+      console.log(error);
+      return;
     }
+  }
 
-    // Load data when page opens
-    loadData();
-  </script>
+  document.getElementById("name").value = "";
+  loadData();
+}
+
+async function loadData() {
+  const { data, error } = await client
+    .from("users")
+    .select("*")
+    .order("id", { ascending: false });
+
+  if (error) {
+    console.log(error);
+    return;
+  }
+
+  const list = document.getElementById("userList");
+  list.innerHTML = "";
+
+  data.forEach(user => {
+    const li = document.createElement("li");
+
+    li.innerHTML = `
+      ${user.name}
+      <button onclick="editUser(${user.id}, '${user.name}')">Edit</button>
+    `;
+
+    list.appendChild(li);
+  });
+}
+
+function editUser(id, name) {
+  editingId = id;
+  document.getElementById("name").value = name;
+  document.querySelector("button").textContent = "Update";
+}
+
+// Load data when page opens
+loadData();
+</script>
 
 </body>
 </html>
+
